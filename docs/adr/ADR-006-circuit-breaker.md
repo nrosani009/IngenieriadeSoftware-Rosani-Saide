@@ -1,4 +1,4 @@
-# ADR-006: Resiliencia en integraciones externas mediante Circuit Breaker
+# ADR-005: Integración con agencias externas mediante Anti-Corruption Layer y adaptadores
 
 **Estado:** Aceptada  
 **Fecha:** Pendiente de registrar  
@@ -6,116 +6,115 @@
 
 ## Contexto y problema
 
-Trotamundos debe comunicarse con APIs externas de agencias de viajes y proveedores de transporte para consultar reservas, recibir actualizaciones y facilitar la resolución de problemas.
+Trotamundos debe integrarse con agencias de viajes y proveedores externos para obtener información sobre reservas, actualizaciones y cancelaciones, además de facilitar la resolución de problemas durante los viajes.
 
-Estos sistemas son administrados por terceros, por lo que Trotamundos no tiene control sobre su disponibilidad, latencia o comportamiento ante fallas.
+Estos sistemas pueden utilizar diferentes estructuras de datos, contratos de API y mecanismos de comunicación. Incorporar directamente estas particularidades al modelo interno de Trotamundos generaría dependencias que dificultarían el mantenimiento y la incorporación de nuevos proveedores.
 
-Si una API externa deja de responder, las solicitudes podrían permanecer bloqueadas hasta alcanzar su tiempo de espera, consumiendo recursos y afectando otras operaciones del sistema.
-
-Se necesita definir una estrategia de resiliencia que permita detectar fallas recurrentes, limitar las solicitudes hacia proveedores que presentan problemas y mantener el funcionamiento de las capacidades internas que no dependen de ellos.
+Se necesita definir una estrategia de integración que permita traducir los formatos externos hacia un modelo común, minimizando el impacto de los cambios realizados por terceros.
 
 ## Drivers arquitectónicos
 
 - **UC-04:** Integración con la agencia de viajes preferida para la resolución de problemas.
-- **QA-02:** Mantener el tiempo de respuesta web por debajo de 800 ms.
-- **QA-04:** Disponibilidad global objetivo del 99,99 % mensual.
-- **CON-02:** Integración con APIs heterogéneas de terceros.
-- **CRN-03:** Aislamiento del dominio interno respecto de los sistemas externos.
+- **QA-08:** Modificabilidad y extensibilidad para incorporar nuevos proveedores y medios de transporte.
+- **CON-02:** Interoperabilidad con APIs heterogéneas de terceros.
+- **CON-03:** Definición de contratos de integración mediante Spec-Driven Development.
+- **CRN-03:** Aislamiento de dominios y mapeo de modelos externos.
 
 ## Alternativas consideradas
 
-### Opción 1: Llamadas directas con manejo básico de errores
+### Opción 1: Integración directa con APIs externas
 
-Los servicios internos realizan solicitudes a las APIs externas y gestionan individualmente los errores que puedan producirse.
-
-**Ventajas:**
-- Implementación sencilla.
-- No requiere componentes adicionales.
-- Menor complejidad inicial.
-
-**Desventajas:**
-- Las solicitudes pueden permanecer bloqueadas ante fallas externas.
-- No evita realizar nuevas llamadas hacia proveedores que presentan errores recurrentes.
-- Puede provocar acumulación de solicitudes y consumo innecesario de recursos.
-
-### Opción 2: Timeouts y reintentos con Exponential Backoff
-
-Cada solicitud establece un tiempo máximo de espera. Ante errores transitorios, se realizan nuevos intentos aumentando progresivamente el intervalo entre ellos.
+Los servicios internos de Trotamundos consumen directamente las APIs de cada agencia, incorporando la lógica de conversión de datos dentro de los propios servicios de negocio.
 
 **Ventajas:**
-- Limita la duración de las solicitudes.
-- Permite recuperarse de errores transitorios.
-- Reduce la frecuencia de reintentos consecutivos.
+- Menor cantidad de componentes.
+- Implementación inicial sencilla para pocas integraciones.
+- Comunicación directa con los proveedores.
 
 **Desventajas:**
-- Los reintentos pueden aumentar la carga sobre un proveedor que ya presenta problemas.
-- No impide continuar enviando solicitudes cuando las fallas son persistentes.
-- Puede incrementar el tiempo total de respuesta.
+- Alto acoplamiento con los formatos externos.
+- Los cambios en las APIs pueden afectar la lógica de negocio.
+- Dificulta incorporar nuevos proveedores sin modificar componentes existentes.
 
-### Opción 3: Circuit Breaker con timeouts y reintentos controlados
+### Opción 2: Adaptadores independientes por proveedor
 
-Se incorpora un mecanismo que supervisa las llamadas hacia cada proveedor externo y suspende temporalmente las solicitudes cuando detecta fallas recurrentes.
+Se implementa un adaptador para cada agencia o proveedor, encargado de gestionar su API y transformar las respuestas a un formato común.
 
 **Ventajas:**
-- Evita enviar solicitudes reiteradas hacia servicios que presentan fallas persistentes.
-- Reduce el consumo innecesario de recursos.
-- Permite aplicar respuestas degradadas cuando un proveedor no está disponible.
-- Facilita la recuperación mediante intentos controlados.
+- Encapsula las particularidades de cada proveedor.
+- Facilita incorporar nuevas integraciones.
+- Permite modificar un adaptador sin afectar necesariamente a los demás.
 
 **Desventajas:**
-- Introduce mayor complejidad de configuración.
-- Requiere definir umbrales de fallas y tiempos de recuperación.
-- Puede rechazar temporalmente solicitudes hacia un proveedor que ya se haya recuperado.
+- Puede producir inconsistencias en las transformaciones.
+- No establece por sí sola una política centralizada de protección del modelo de dominio.
+- Puede duplicar reglas de validación y normalización.
+
+### Opción 3: Anti-Corruption Layer (ACL) con adaptadores
+
+Se incorpora una capa de integración que actúa como intermediaria entre el dominio interno de Trotamundos y los sistemas externos.
+
+La ACL define un modelo canónico y utiliza adaptadores especializados para comunicarse con cada proveedor.
+
+**Ventajas:**
+- Protege el modelo interno frente a estructuras externas heterogéneas.
+- Centraliza las reglas de traducción y normalización.
+- Facilita incorporar nuevos proveedores mediante interfaces comunes.
+- Favorece la mantenibilidad y evolución de las integraciones.
+
+**Desventajas:**
+- Introduce una capa arquitectónica adicional.
+- Requiere definir y mantener un modelo canónico.
+- Aumenta el esfuerzo inicial de diseño.
+- Los cambios en el modelo común pueden requerir actualizar varios adaptadores.
 
 ## Comparación de alternativas
 
-| Criterio | Llamadas directas | Timeouts + reintentos | Circuit Breaker |
+| Criterio | Integración directa | Adaptadores | ACL + adaptadores |
 |---|---|---|---|
-| Complejidad | Baja | Media | Media/Alta |
-| Control del tiempo de espera | Básico | Sí | Sí, combinado con timeout |
-| Recuperación ante errores transitorios | Limitada | Sí | Sí |
-| Protección ante fallas persistentes | Baja | Parcial | Alta |
-| Reducción de llamadas innecesarias | No | Parcial | Sí |
-| Respuesta degradada | Manual | Manual | Integrable al patrón |
+| Acoplamiento con APIs externas | Alto | Bajo | Bajo |
+| Protección del modelo interno | Baja | Parcial | Alta |
+| Incorporación de proveedores | Requiere modificar servicios | Mediante nuevos adaptadores | Mediante adaptadores y contratos comunes |
+| Normalización de datos | Distribuida | Por adaptador | Centralizada en la ACL |
+| Complejidad inicial | Baja | Media | Alta |
+| Mantenibilidad ante cambios externos | Baja | Media/Alta | Alta |
 
 ## Decisión
 
-Se adopta el patrón **Circuit Breaker, combinado con timeouts y reintentos controlados mediante Exponential Backoff**, para las comunicaciones salientes hacia APIs de agencias y proveedores externos.
+Se adopta una **Anti-Corruption Layer (ACL) combinada con el patrón Adapter/Plugin** para gestionar las integraciones B2B de Trotamundos.
 
-El mecanismo se ubicará en el Proxy de Resiliencia Externa definido en la iteración 3, entre el servicio de integración y los sistemas de terceros.
+La ACL será responsable de traducir los datos provenientes de las agencias y proveedores hacia el modelo canónico de reservas utilizado internamente.
 
-El Circuit Breaker contempla tres estados:
+Cada proveedor contará con un adaptador que implementará una interfaz común, como `IAgencyAdapter` o `ITransportProviderAdapter`, encapsulando sus particularidades técnicas.
 
-1. **Closed:** las solicitudes se realizan normalmente y se supervisan los errores.
-2. **Open:** cuando se supera un umbral de fallas, se suspenden temporalmente las solicitudes hacia el proveedor afectado.
-3. **Half-Open:** transcurrido un intervalo de recuperación, se permiten solicitudes de prueba para determinar si el proveedor puede volver a utilizarse.
+Esta alternativa se selecciona porque responde directamente a los requerimientos de interoperabilidad y extensibilidad, reduciendo la dependencia del dominio interno respecto de los contratos externos.
 
-Los reintentos se limitarán a errores transitorios y operaciones seguras de repetir, evitando duplicar modificaciones de reservas.
+Se prioriza la mantenibilidad frente a la menor complejidad inicial de una integración directa.
 
-Cuando un proveedor no esté disponible, el sistema podrá informar temporalmente la imposibilidad de consultar información actualizada y mantener accesibles los datos previamente almacenados, identificando su posible desactualización.
-
-Se selecciona esta alternativa porque permite limitar el impacto de fallas externas sobre los servicios internos, priorizando la disponibilidad y la estabilidad frente a la menor complejidad de las llamadas directas.
+Los mecanismos de resiliencia frente a fallas externas se documentarán en un ADR independiente.
 
 ## Consecuencias
 
 ### Positivas
-
-- Reducción de solicitudes innecesarias hacia proveedores con fallas persistentes.
-- Menor riesgo de agotamiento de recursos por conexiones bloqueadas.
-- Posibilidad de mantener operativas funcionalidades que no dependen del proveedor afectado.
-- Recuperación controlada cuando se restablece la disponibilidad externa.
+- Menor acoplamiento entre el dominio interno y las APIs externas.
+- Mayor facilidad para incorporar agencias y medios de transporte.
+- Centralización de las reglas de traducción y normalización.
+- Posibilidad de modificar integraciones sin alterar directamente la lógica de negocio.
 
 ### Negativas
-
-- Mayor complejidad en la configuración de las comunicaciones.
-- Necesidad de ajustar umbrales y tiempos de recuperación.
-- Posibilidad de rechazar temporalmente solicitudes válidas.
-- Las respuestas degradadas pueden contener información desactualizada.
+- Mayor cantidad de componentes y contratos.
+- Necesidad de mantener actualizado el modelo canónico.
+- Esfuerzo adicional para desarrollar y probar adaptadores.
+- Posible sobrecarga de procesamiento durante la transformación de datos.
 
 ## Validación de la decisión
 
-La solución propuesta deberá evaluarse mediante los siguientes escenarios:
+La solución propuesta deberá evaluarse mediante los siguientes aspectos:
 
-- **Falla persistente:** simular errores consecutivos de una API externa y comprobar que el circuito pase al estado Open.
-- **Recuperación:** simular el restablecimiento del proveedor y verificar la transición desde Half-Open hacia Closed.
-- **Rendimiento:** analizar que las solicitudes fallidas no provoquen esperas indefinidas
+- **Modificabilidad:** analizar si es posible incorporar un nuevo proveedor implementando un adaptador sin modificar el modelo de dominio interno.
+- **Interoperabilidad:** comprobar que diferentes formatos externos puedan transformarse al modelo canónico.
+- **Mantenibilidad:** evaluar el impacto de modificar el contrato de una agencia existente.
+- **Rendimiento:** considerar la sobrecarga introducida por las operaciones de traducción.
+- **Trazabilidad:** verificar que las interfaces de integración estén documentadas mediante contratos explícitos.
+
+**Estado de validación:** Pendiente de evaluación mediante el diseño arquitectónico o el prototipo académico. La ACL reduce el acoplamiento, pero no elimina completamente las dependencias con los sistemas externos.
