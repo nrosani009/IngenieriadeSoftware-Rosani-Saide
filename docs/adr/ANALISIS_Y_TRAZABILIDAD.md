@@ -55,6 +55,20 @@ El resumen analítico consulta `analytics.db`. La escritura comparte proceso con
 
 Se eligió la opción B porque permite verificar con reglas simples la consulta de estado y la derivación simulada de casos complejos.
 
+## Evidencia de validación integral (INC-16)
+
+Según el informe de ejecución local de Codex del 22/11/2026:
+
+- **Suite de pruebas:** `python -m pytest -q`, 22 ejecutadas, 22 aprobadas, 0 fallidas; también pasó `python -m compileall -q app tests`.
+- **Entorno de pruebas:** la primera ejecución se interrumpió por un problema de permisos de la carpeta temporal de Windows para `tmp_path`. Al usar una ruta temporal accesible, la suite completa pasó sin modificar el código.
+- **Cobertura funcional ejecutada:** CRUD, aislamiento Alice/Bob, asociación por fechas, archivado bajo demanda, whitelist e idempotencia de correo, simulación de proveedor, analítica y cancelaciones, asistente y derivaciones simuladas.
+- **Contratos:** la comprobación adicional del esquema OpenAPI no encontró referencias de esquema sin resolver.
+- **Consultas de listado:** para 12 viajes se observaron **2 instrucciones `SELECT`** y las reservas agrupadas correctamente, sin consultas N+1.
+- **Latencia exploratoria:** 40 llamadas locales a `GET /trips?include_archived=true`, mediana **1,49 ms** y p95 **2,05 ms**, usando `TestClient`. No son mediciones de extremo a extremo bajo carga ni verifican el objetivo global de QA-02.
+- **Fuera de alcance de esta ejecución:** disponibilidad mensual QA-04, capacidad QA-05, FCP móvil QA-03, distribución QA-10, integración B2B real y OAuth2/OIDC productivo. No deben marcarse como cumplidos.
+
+Los resultados proceden del informe de Codex proporcionado para esta revisión; no se adjuntaron registros completos del entorno de ejecución ni se repitieron las pruebas de manera independiente en este documento.
+
 ## Validación manual sugerida
 1. Crear un viaje con fechas y, desde Swagger, crear una reserva sin `trip_id` pero con `start_at` dentro de ese período: debe asociarse automáticamente solo si hay un viaje activo propio compatible. Comprobar que, ante fechas ausentes o múltiples coincidencias, se solicita indicar el viaje. La UI conserva la asignación por ID.
 2. Intentar importar un correo sin whitelist: debe rechazarse.

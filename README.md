@@ -80,7 +80,9 @@ Desde la carpeta del proyecto, con el entorno virtual activo:
 python -m pytest -q
 ```
 
-En la última verificación, pytest informó 15 pruebas aprobadas.
+**Validación local (Codex, 22/11/2026):** 22 pruebas ejecutadas, 22 aprobadas y 0 fallidas. Se comprobó también la sintaxis con `python -m compileall -q app tests` y la resolución de referencias OpenAPI. En un entorno Windows, la primera ejecución encontró un problema de permisos al crear la carpeta temporal de `pytest`; se resolvió configurando un directorio temporal accesible, sin modificar el código.
+
+En una medición exploratoria con `TestClient` (40 solicitudes, 12 viajes), `GET /trips` tuvo mediana de 1,49 ms y p95 de 2,05 ms. La traza SQL mostró 2 consultas `SELECT` para recuperar los viajes y sus reservas. **Estos valores no acreditan QA-02 en condiciones reales de red o carga.**
 
 ## 9. Finalizar la revisión
 
