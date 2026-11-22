@@ -1,7 +1,7 @@
 # ADR-005: Integración con agencias externas mediante Anti-Corruption Layer y adaptadores
 
 **Estado:** Aceptada  
-**Fecha:** Pendiente de registrar
+**Fecha:** 2026-11-20 (primer registro verificable en GitHub; no necesariamente fecha de la decisión)
 **Última actualización:** 2026-11-22  
 **Iteración ADD:** 3 — Diseño del módulo de soporte e integración B2B con agencias de viajes.
 

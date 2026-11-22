@@ -1,7 +1,7 @@
 # ADR-007: Distribución global mediante CDN y Global Load Balancer
 
 **Estado:** Aceptada  
-**Fecha:** Pendiente de registrar
+**Fecha:** 2026-11-20 (primer registro verificable en GitHub; no necesariamente fecha de la decisión)
 **Última actualización:** 2026-11-22  
 **Iteración ADD:** 4 — Optimización del rendimiento móvil y distribución global.
 

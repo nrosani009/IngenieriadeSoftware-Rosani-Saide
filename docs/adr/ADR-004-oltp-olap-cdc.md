@@ -1,7 +1,7 @@
 # ADR-004: Separación de datos transaccionales y analíticos mediante CDC
 
 **Estado:** Aceptada  
-**Fecha:** Pendiente de registrar
+**Fecha:** 2026-11-20 (primer registro verificable en GitHub; no necesariamente fecha de la decisión)
 **Última actualización:** 2026-11-22  
 **Iteración ADD:** 2 — Diseño de la capa de datos y pipeline analítico.
 

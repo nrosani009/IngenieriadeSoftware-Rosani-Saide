@@ -1,7 +1,7 @@
 # ADR-009: Asistente virtual de primer nivel basado en reglas y derivación a agencias
 
 **Estado:** Aceptada  
-**Fecha:** Pendiente de registrar  
+**Fecha:** 2026-11-22 (primer registro verificable en GitHub; no necesariamente fecha de la decisión)  
 **Última actualización:** 2026-11-22  
 **Iteración ADD:** 5 — Diseño del asistente virtual y escalamiento a agencias de viajes.
 
