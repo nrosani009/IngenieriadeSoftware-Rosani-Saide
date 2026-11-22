@@ -1,7 +1,8 @@
 # ADR-003: Comunicación asíncrona mediante Event Broker
 
-**Estado:** Propuesta  
-**Fecha:** Pendiente de registrar  
+**Estado:** Aceptada  
+**Fecha:** Pendiente de registrar
+**Última actualización:** 2026-11-22  
 **Iteración ADD:** 1 — Definición de la estructura macro y arquitectura de referencia.
 
 ## Contexto y problema
