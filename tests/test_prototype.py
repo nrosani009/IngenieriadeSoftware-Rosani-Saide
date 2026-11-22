@@ -207,6 +207,34 @@ def test_analytics_counts_provider_cancellation_transitions():
     assert after["updated_events"] == before["updated_events"] + 1
 
 
+
+def test_analytics_counts_manual_and_provider_cancellation_transitions():
+    before = client.get("/analytics/summary", headers=ALICE).json()
+    trip = client.post("/trips", headers=ALICE, json={"name": "Cancelaciones de distintos canales"}).json()
+    manual = client.post("/reservations", headers=ALICE, json={
+        "trip_id": trip["id"], "kind": "hotel", "provider": "DemoStay",
+    }).json()
+    provider = client.post("/reservations", headers=ALICE, json={
+        "trip_id": trip["id"], "kind": "flight", "provider": "DemoAir",
+    }).json()
+    path = f"/reservations/{manual['id']}"
+    first = client.patch(path, headers=ALICE, json={"status": "cancelled"})
+    assert first.status_code == 200
+    assert first.json()["status"] == "cancelled"
+    assert client.patch(path, headers=ALICE, json={"status": "cancelled"}).status_code == 200
+    assert client.post(f"/provider/reservations/{provider['id']}/update", headers=ALICE,
+                       json={"status": "cancelled"}).status_code == 200
+    after = client.get("/analytics/summary", headers=ALICE).json()
+    assert after["cancellations"] == before["cancellations"] + 2
+    assert after["updated_events"] == before["updated_events"] + 2
+    assert client.get("/analytics/summary", headers=BOB).status_code == 200
+    # La vuelta a confirmado habilita una nueva transición real a cancelada.
+    assert client.patch(path, headers=ALICE, json={"status": "confirmed"}).status_code == 200
+    assert client.patch(path, headers=ALICE, json={"status": "cancelled"}).status_code == 200
+    again = client.get("/analytics/summary", headers=ALICE).json()
+    assert again["cancellations"] == before["cancellations"] + 3
+
+
 def test_analytics_failure_preserves_operational_write(monkeypatch, tmp_path, caplog):
     from app import services
 

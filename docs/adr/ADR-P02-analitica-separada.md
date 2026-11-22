@@ -14,7 +14,7 @@ Mantener `trotamundos.db` para transacciones operativas y `analytics.db` para ev
   - Las consultas agregadas no leen la base operativa. Esta separación de almacenamiento representa la decisión de la iteración 2.
 - Limitaciones:
   - no hay CDC real ni pipeline ETL completo
-  - el resumen agrega eventos locales por tipo, destino y fecha UTC. Las transiciones a cancelada del proveedor simulado se registran como un tipo de evento separado
+  - el resumen agrega eventos locales por tipo, destino y fecha UTC. Las transiciones de confirmada a cancelada se registran como eventos diferenciados según su origen (`manual_cancelled` o `provider_cancelled`) y el indicador `cancellations` suma ambos; enviar otra cancelación a una reserva ya cancelada no incrementa el indicador. Se contabilizan transiciones, no reservas únicas ni reservas creadas directamente como canceladas
   - la escritura analítica es síncrona y posterior al commit operativo. Los errores SQLite se registran y la operación principal puede completarse sin evento analítico. No hay reintentos ni entrega garantizada
   - la separación es de almacenamiento y consultas. La escritura comparte el proceso y puede sumar latencia a la respuesta
 

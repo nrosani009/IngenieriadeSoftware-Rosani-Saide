@@ -548,7 +548,8 @@ def update_reservation(reservation_id: int, payload: ReservationPatch, owner: st
         values.append(owner)
         c.execute(f"UPDATE reservations SET {','.join(assignments)} WHERE id=? AND owner=?", values)
         updated = rowdict(c.execute("SELECT * FROM reservations WHERE id=?", (reservation_id,)).fetchone())
-    log_analytics(owner, reservation_id, "updated", updated["kind"], updated["destination"])
+    event_type = "manual_cancelled" if old["status"] != "cancelled" and updated["status"] == "cancelled" else "updated"
+    log_analytics(owner, reservation_id, event_type, updated["kind"], updated["destination"])
     return updated
 
 @app.delete(
@@ -666,7 +667,7 @@ def archive_finished(owner: str = Depends(current_user)):
     response_model=AnalyticsSummary,
     tags=["Analítica"],
     summary="Consultar resumen analítico",
-    description="Agrupa eventos por tipo, destino y fecha UTC, y cuenta cancelaciones del proveedor simulado.",
+    description="Agrupa eventos por tipo, destino y fecha UTC, y cuenta transiciones a cancelada tanto manuales como del proveedor simulado.",
 )
 def analytics_summary(owner: str = Depends(current_user)):
     with connect(ANALYTICS_DB_PATH) as c:
@@ -684,7 +685,8 @@ def analytics_summary(owner: str = Depends(current_user)):
             (owner,))}
     return {"storage": "separate-analytics-database", "events_by_kind": by_kind,
             "events_by_destination": by_destination, "events_by_date": by_date,
-            "updated_events": totals.get("updated", 0), "cancellations": totals.get("provider_cancelled", 0)}
+            "updated_events": totals.get("updated", 0) + totals.get("manual_cancelled", 0),
+            "cancellations": totals.get("provider_cancelled", 0) + totals.get("manual_cancelled", 0)}
 
 @app.post(
     "/support",

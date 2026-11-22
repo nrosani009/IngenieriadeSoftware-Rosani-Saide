@@ -94,6 +94,6 @@ Podés cerrar la pestaña del navegador cuando termines. El servidor se detiene 
 - La demo funciona en local. No requiere servicios externos ni infraestructura en la nube.
 - Las integraciones con correo, proveedores y agencias son simuladas. Los tokens fijos son exclusivos de la demo.
 - El archivado de viajes vencidos ocurre al cargar el listado activo. La API permite incluir los archivados con `GET /trips?include_archived=true`.
-- La analítica separa almacenamiento y consultas. Si falla el registro de un evento, la operación principal puede completarse y el evento puede perderse. El rendimiento, la disponibilidad y la escala de producción quedan fuera de la verificación.
+- La analítica separa almacenamiento y consultas. El indicador `cancellations` cuenta nuevas transiciones a cancelada tanto manuales como del proveedor simulado; no representa reservas únicas canceladas ni recupera eventos históricos. Si falla el registro de un evento, la operación principal puede completarse y el evento puede perderse. El rendimiento, la disponibilidad y la escala de producción quedan fuera de la verificación.
 
 Para consultar decisiones y evidencias, ver [Análisis y trazabilidad](docs/adr/ANALISIS_Y_TRAZABILIDAD.md).
