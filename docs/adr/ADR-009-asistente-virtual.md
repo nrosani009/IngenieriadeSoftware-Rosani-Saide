@@ -91,7 +91,7 @@ Se adopta un **asistente virtual determinista basado en reglas e intenciones**, 
 El flujo propuesto distingue:
 
 1. **Consulta sencilla:** identificar la intención, validar que la reserva pertenece al usuario autenticado, consultar su estado y construir una respuesta local.
-2. **Caso complejo:** clasificarlo para escalamiento, registrar el caso y solicitar su derivación mediante el contrato del subsistema B2B y la ACL definidos en el ADR-005; las comunicaciones externas conservan las tácticas de resiliencia del ADR-006.
+2. **Caso complejo:** incluir las solicitudes de reprogramación o cambio de fecha, clasificarlas para escalamiento, registrar el caso y solicitar su derivación mediante el contrato del subsistema B2B y la ACL definidos en el ADR-005; las comunicaciones externas conservan las tácticas de resiliencia del ADR-006.
 3. **Intención no resuelta:** solicitar información adicional o derivar la consulta, sin asumir que el asistente comprende cualquier mensaje ni que puede modificar reservas automáticamente.
 
 La interfaz de soporte debe declarar las entradas, respuestas, errores y reglas de autorización. La decisión corresponde a la **arquitectura objetivo**; el prototipo implementa únicamente un subconjunto local y simulado, documentado en ADR-P03 y ADR-P04.
@@ -122,7 +122,7 @@ Se consideran los siguientes escenarios:
 
 - **Consulta autorizada:** verificar que el asistente puede informar el estado de una reserva perteneciente al usuario.
 - **Aislamiento:** intentar consultar una reserva ajena y comprobar que no se revela información.
-- **Escalamiento:** comprobar que un caso complejo se registra e identifica la agencia preferida y que la respuesta indica si la derivación fue simulada.
+- **Escalamiento:** comprobar que un caso complejo, incluidas las solicitudes de reprogramación, se registra e identifica la agencia preferida y que la respuesta indica si la derivación fue simulada. Verificar que no cambia la reserva local.
 - **Contrato:** validar las entradas y salidas del endpoint de soporte y los errores esperados.
 - **Modificabilidad:** evaluar el impacto de incorporar una nueva regla sin alterar la lógica de reservas o los adaptadores.
 - **Rendimiento y disponibilidad:** medir los objetivos QA-02 y QA-04 mediante pruebas representativas en el sistema objetivo; una respuesta local no garantiza estos atributos globales.
@@ -130,7 +130,7 @@ Se consideran los siguientes escenarios:
 ### Correspondencia con el prototipo académico
 
 - **Interfaz:** `app/main.py`, `POST /support`, con mensaje, agencia preferida e identificador opcional de reserva.
-- **Clasificación:** `app/services.py`, `classify_support()`, mediante términos explícitos.
+- **Clasificación:** `app/services.py`, `classify_support()`, mediante términos explícitos; las solicitudes de reprogramación o cambio de fecha se derivan como casos complejos, sin ejecutar el cambio.
 - **Consulta autorizada:** `owned_reservation()` verifica la propiedad antes de devolver el estado de la reserva.
 - **Casos:** `support_cases` en la base SQLite operacional; se registran clasificación, estado y agencia indicada.
 - **Pruebas disponibles:** `test_support_bot_and_agency_escalation` y `test_support_answers_only_for_owned_reservations`, en `tests/test_prototype.py`.

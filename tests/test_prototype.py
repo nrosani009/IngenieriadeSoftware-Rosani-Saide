@@ -89,6 +89,27 @@ def test_support_bot_and_agency_escalation():
     assert "Agencia Norte" in complex_case["response"]
 
 
+def test_support_reprogramming_is_escalated_without_modifying_reservation():
+    trip = client.post("/trips", headers=ALICE, json={"name": "Viaje para reprogramar"}).json()
+    reservation = client.post("/reservations", headers=ALICE, json={
+        "trip_id": trip["id"], "kind": "flight", "provider": "DemoAir",
+        "start_at": "2030-06-01T10:00:00",
+    }).json()
+    for message in ("Necesito reprogramar mi vuelo", "Quiero cambiar fecha de mi reserva"):
+        response = client.post("/support", headers=ALICE, json={
+            "message": message, "reservation_id": reservation["id"],
+            "preferred_agency": "Agencia Demo",
+        })
+        assert response.status_code == 200
+        result = response.json()
+        assert result["case"]["classification"] == "agency"
+        assert result["case"]["status"] == "delegated"
+        assert result["case"]["agency"] == "Agencia Demo"
+        assert "simulada" in result["response"]
+    stored = client.get(f"/trips/{trip['id']}", headers=ALICE).json()["reservations"][0]
+    assert stored["start_at"] == "2030-06-01T10:00:00"
+
+
 def test_finished_trip_archiving():
     past = (date.today() - timedelta(days=3)).isoformat()
     trip = client.post("/trips", headers=ALICE, json={"name":"Viaje finalizado","end_date":past}).json()

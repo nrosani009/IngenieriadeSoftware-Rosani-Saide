@@ -68,7 +68,7 @@ Dejá abierta la terminal mientras usás el prototipo. Al iniciar, la aplicació
 2. En **Crear viaje**, escribí un nombre y hacé clic en **Crear viaje**. El ID se copia al formulario de reservas.
 3. Elegí un tipo y un proveedor y hacé clic en **Agregar reserva**. Anotá el número que aparece como **Reserva #…** en la tarjeta del viaje.
 4. En **Soporte**, escribí «¿Cuál es el estado de mi reserva?», ingresá ese ID y hacé clic en **Consultar asistente**.
-5. Enviá «Necesito un reembolso urgente» para ver la derivación simulada a la agencia indicada en el formulario.
+5. Enviá «Necesito un reembolso urgente» o «Quiero reprogramar mi vuelo» para ver la derivación simulada a la agencia indicada en el formulario. La demo no modifica la reserva al solicitar una reprogramación.
 
 Para probar una operación protegida directamente desde Swagger, ingresá `Bearer demo-alice-token` o `Bearer demo-bob-token` en el campo `authorization`. En la interfaz web, ingresá solo el token, sin el prefijo `Bearer`.
 

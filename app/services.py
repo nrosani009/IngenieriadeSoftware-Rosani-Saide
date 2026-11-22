@@ -35,5 +35,10 @@ def enrich_reservation(payload: dict) -> dict:
 
 def classify_support(message: str) -> str:
     text = message.lower()
-    complex_terms = ("reembolso", "demanda", "emergencia", "sobreventa", "no puedo viajar", "cancelación urgente")
+    complex_terms = (
+        "reembolso", "demanda", "emergencia", "sobreventa",
+        "no puedo viajar", "cancelación urgente",
+        "reprogram", "cambiar fecha", "cambio de fecha",
+        "modificar fecha", "posponer", "adelantar vuelo",
+    )
     return "agency" if any(term in text for term in complex_terms) else "bot"
