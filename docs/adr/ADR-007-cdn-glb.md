@@ -126,3 +126,9 @@ Para evaluar la solución propuesta se consideran los siguientes aspectos:
 La CDN y el GLB no garantizan por sí solos los tiempos de respuesta establecidos, ya que estos también dependen del procesamiento interno, la red del usuario y el rendimiento del dispositivo.
 
 **Estado de validación:** Pendiente de evaluación mediante estimaciones de latencia, diagramas de despliegue y, cuando corresponda, pruebas acotadas del prototipo académico.
+
+## Correspondencia con el prototipo académico
+
+Esta decisión corresponde a la **arquitectura objetivo**. El prototipo funciona como una única aplicación FastAPI local y sirve una interfaz web adaptable; no implementa CDN, Edge Caching, Global Load Balancer, despliegue multirregión ni conmutación ante fallas regionales.
+
+La UI puede consultarse desde un navegador móvil, pero esto no valida QA-10 (distribución global), QA-02 (respuesta web inferior a 800 ms) ni QA-03 (FCP inferior a 1,4 segundos). La evaluación de estas tácticas requiere infraestructura y pruebas representativas; no debe atribuirse su cumplimiento al prototipo local.

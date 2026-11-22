@@ -128,3 +128,11 @@ Para evaluar la solución propuesta se consideran los siguientes aspectos:
 El uso de Mobile BFF y la reducción del payload pueden contribuir a mejorar el rendimiento, pero no garantizan por sí solos un FCP inferior a 1,4 segundos, ya que este depende también del procesamiento del cliente, la descarga de recursos y las condiciones de red.
 
 **Estado de validación:** Pendiente de evaluación mediante estimaciones, comparación de respuestas o pruebas acotadas del prototipo académico.
+
+## Correspondencia con el prototipo académico
+
+El Mobile BFF, el Data Trimming específico del cliente móvil y el Lazy Loading de reservas de los próximos tres días forman parte de la **arquitectura objetivo**. No se implementan como componentes independientes en el prototipo.
+
+Actualmente `GET /` sirve una interfaz con CSS responsive y `GET /trips` devuelve los viajes y las reservas desde una aplicación FastAPI única. No existe un BFF móvil, consolidación de microservicios ni una carga progresiva del itinerario. La prueba del HTML no mide el FCP ni demuestra mejoras de rendimiento.
+
+Por tanto, QA-02, QA-03 y QA-10 permanecen pendientes de validación. Las comparaciones de payload, carga progresiva y latencia requieren una implementación y mediciones posteriores.
