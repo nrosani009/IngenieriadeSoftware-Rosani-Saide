@@ -17,7 +17,7 @@ Se necesita definir una estrategia de distribución que reduzca el impacto de la
 
 ## Drivers arquitectónicos
 
-- **UC-03:** Visualización del panel de viajes desde la aplicación móvil.
+- **UC-02 / UC-03 (refinamiento móvil):** Consulta y presentación del itinerario desde la aplicación móvil, vinculadas a la gestión de reservas (UC-02) y al ciclo de vida de viajes (UC-03). La visualización móvil no redefine UC-03 ni constituye un nuevo caso de uso.
 - **QA-02:** Tiempo de respuesta web inferior a 800 ms.
 - **QA-03:** FCP móvil inferior a 1,4 segundos.
 - **QA-10:** Distribución global y reducción de latencia geográfica mediante infraestructura multirregión.
