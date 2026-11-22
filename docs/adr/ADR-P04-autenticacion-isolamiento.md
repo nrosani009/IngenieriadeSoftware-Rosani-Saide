@@ -18,5 +18,9 @@ Usar tokens de demostración (`demo-alice-token`, `demo-bob-token`) asociados a 
   - no es OAuth 2.0 ni RBAC real
   - no se persisten secretos ni sesiones reales
 
+## Correspondencia con la arquitectura objetivo
+
+La Iteración 3 propone OAuth 2.0 / OpenID Connect para identidad y autorización granular de itinerarios compartidos (QA-07 y CRN-04). El prototipo utiliza dos tokens fijos y filtra viajes y reservas por propietario (`app/security.py` y `app/main.py`). Los tests verifican escenarios de aislamiento entre Alice y Bob, pero no prueban OAuth/OIDC, RBAC/ABAC completo, delegación de acceso, compartición de itinerarios ni conexión segura con proveedores de correo.
+
 ## Relación con el alcance
 La seguridad implementada es una prueba de concepto académica, no una solución de autenticación para producción.

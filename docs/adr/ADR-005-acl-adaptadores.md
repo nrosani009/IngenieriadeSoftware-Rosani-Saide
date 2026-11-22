@@ -119,3 +119,9 @@ La solución propuesta deberá evaluarse mediante los siguientes aspectos:
 - **Trazabilidad:** verificar que las interfaces de integración estén documentadas mediante contratos explícitos.
 
 **Estado de validación:** Pendiente de evaluación mediante el diseño arquitectónico o el prototipo académico. La ACL reduce el acoplamiento, pero no elimina completamente las dependencias con los sistemas externos.
+
+## Correspondencia con el prototipo académico
+
+Esta es una **decisión de la arquitectura objetivo**. El prototipo no implementa una ACL B2B desplegada ni interfaces `IAgencyAdapter` para agencias reales. La función `enrich_reservation()` (`app/services.py`) normaliza datos de entrada localmente, y `POST /email/ingest` y `POST /provider/reservations/{reservation_id}/update` (`app/main.py`) simulan proveedores. `POST /support` registra la agencia preferida y una derivación simulada, **sin invocación externa**.
+
+Estas simplificaciones se justifican en [ADR-P03](./ADR-P03-integraciones-simuladas.md); las pruebas de ingesta, proveedor y soporte verifican los flujos locales, **no** la extensibilidad efectiva frente a cambios en una API B2B. La validación real de QA-08, CON-02 y CRN-03 permanece pendiente.

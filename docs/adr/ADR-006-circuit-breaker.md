@@ -126,3 +126,9 @@ La solución propuesta deberá evaluarse mediante los siguientes escenarios:
 Los valores concretos de timeout, umbral de fallas e intervalo de recuperación deberán definirse durante el diseño detallado o la implementación del prototipo.
 
 **Estado de validación:** Pendiente de evaluación mediante escenarios de falla o pruebas acotadas del prototipo académico. La incorporación de Circuit Breaker no garantiza por sí sola el cumplimiento del 99,99 % de disponibilidad.
+
+## Correspondencia con el prototipo académico
+
+El patrón Circuit Breaker, los timeouts salientes, los reintentos con Exponential Backoff y la DLQ corresponden a la **arquitectura objetivo**. El prototipo no realiza llamadas a agencias externas y, por tanto, **no implementa ni prueba** apertura/cierre del circuito, fallos remotos, recuperación o entrega garantizada.
+
+Actualmente `POST /support` registra una derivación y responde que es simulada; `POST /provider/reservations/{reservation_id}/update` representa una notificación externa inyectada localmente. Estas simplificaciones se describen en [ADR-P03](./ADR-P03-integraciones-simuladas.md). Ni las pruebas locales ni `GET /health` acreditan QA-02 (< 800 ms) o QA-04 (99,99 % mensual); dichos atributos requieren mediciones y pruebas de fallas en un entorno representativo.
