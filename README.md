@@ -78,4 +78,4 @@ En la última verificación, pytest informó 15 pruebas aprobadas.
 - El archivado de viajes vencidos ocurre al cargar el listado activo. La API permite incluir los archivados con `GET /trips?include_archived=true`.
 - La analítica separa almacenamiento y consultas. Si falla el registro de un evento, la operación principal puede completarse y el evento puede perderse. El rendimiento, la disponibilidad y la escala de producción quedan fuera de la verificación.
 
-Para consultar decisiones y evidencias, ver [Análisis y trazabilidad](docs/ANALISIS_Y_TRAZABILIDAD.md).
+Para consultar decisiones y evidencias, ver [Análisis y trazabilidad](docs/adr/ANALISIS_Y_TRAZABILIDAD.md).
