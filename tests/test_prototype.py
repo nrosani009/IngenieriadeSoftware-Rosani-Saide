@@ -58,6 +58,57 @@ def test_crud_and_user_isolation():
     assert client.delete(f"/reservations/{rid}", headers=ALICE).status_code == 204
     assert client.delete(f"/trips/{tid}", headers=ALICE).status_code == 204
 
+
+def test_automatic_grouping_by_unique_trip_date_range():
+    trip = client.post("/trips", headers=ALICE, json={
+        "name": "Viaje agrupado", "start_date": "2031-04-01", "end_date": "2031-04-10",
+    }).json()
+    manual = client.post("/reservations", headers=ALICE, json={
+        "kind": "flight", "provider": "DemoAir",
+        "start_at": "2031-04-03T08:00:00", "end_at": "2031-04-03T10:00:00",
+    })
+    assert manual.status_code == 201
+    assert manual.json()["trip_id"] == trip["id"]
+    assert client.get(f"/trips/{trip['id']}", headers=ALICE).json()["reservations"][0]["id"] == manual.json()["id"]
+    assert client.post("/whitelist", headers=ALICE, json={"sender": "auto-group@example.com"}).status_code == 201
+    email = client.post("/email/ingest", headers=ALICE, json={
+        "message_id": "auto-group-2031", "sender": "auto-group@example.com",
+        "kind": "hotel", "provider": "DemoStay", "start_at": "2031-04-05T14:00:00",
+        "end_at": "2031-04-08T10:00:00",
+    })
+    assert email.status_code == 200
+    assert email.json()["result"] == "imported"
+    assert email.json()["reservation"]["trip_id"] == trip["id"]
+
+
+def test_automatic_grouping_does_not_guess_on_missing_or_ambiguous_dates():
+    trip = client.post("/trips", headers=BOB, json={
+        "name": "Primer viaje coincidente", "start_date": "2032-05-01", "end_date": "2032-05-10",
+    }).json()
+    assert client.post("/reservations", headers=BOB, json={
+        "kind": "bus", "provider": "DemoBus",
+    }).status_code == 422
+    assert client.post("/reservations", headers=BOB, json={
+        "kind": "bus", "provider": "DemoBus", "start_at": "2032-06-01T12:00:00",
+    }).status_code == 422
+    assert client.post("/reservations", headers=ALICE, json={
+        "kind": "bus", "provider": "DemoBus", "start_at": "2032-05-03T12:00:00",
+    }).status_code == 422
+    second = client.post("/trips", headers=BOB, json={
+        "name": "Segundo viaje coincidente", "start_date": "2032-05-02", "end_date": "2032-05-09",
+    })
+    assert second.status_code == 201
+    ambiguous = client.post("/reservations", headers=BOB, json={
+        "kind": "train", "provider": "DemoRail", "start_at": "2032-05-03T12:00:00",
+    })
+    assert ambiguous.status_code == 409
+    explicit = client.post("/reservations", headers=BOB, json={
+        "trip_id": trip["id"], "kind": "train", "provider": "DemoRail",
+    })
+    assert explicit.status_code == 201
+    assert explicit.json()["trip_id"] == trip["id"]
+
+
 def test_whitelist_ingestion_and_idempotency():
     trip = client.post("/trips", headers=ALICE, json={"name":"Correo test"}).json()
     message = {"message_id":"msg-001","sender":"travel@example.com","trip_id":trip["id"],"kind":"hotel","provider":"DemoStay","destination":"Córdoba"}

@@ -19,5 +19,9 @@ Usar Python 3.11, FastAPI y SQLite como base del prototipo. FastAPI genera la do
   - no es una solución de producción
   - queda fuera del alcance la escalabilidad, concurrencia real y alta disponibilidad
 
+## Asociación de reservas a viajes
+
+Se conserva la asignación manual mediante `trip_id`. Como demostración acotada de UC-03, al omitir dicho identificador en la API de reservas o en la ingesta de correo, se busca un único viaje activo del usuario cuyas fechas incluyan el período de la reserva. Si falta la fecha inicial, no hay coincidencias o existen varias, se pide especificar el viaje; no se crea uno automáticamente ni se infieren destinos.
+
 ## Relación con el alcance
 Se prioriza la demostración de arquitectura y trazabilidad por sobre la simulación de infraestructura de producción.

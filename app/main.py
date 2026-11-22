@@ -88,7 +88,7 @@ class TripPatch(BaseModel):
     status: Literal["active", "archived"] | None = None
 
 class ReservationIn(BaseModel):
-    trip_id: int
+    trip_id: int | None = Field(default=None, gt=0, description="Omitir para asociar automáticamente por fechas a un único viaje activo propio.")
     kind: ReservationKind
     provider: str = Field(min_length=1, max_length=100)
     confirmation_code: str | None = None
@@ -113,7 +113,7 @@ class WhitelistIn(BaseModel):
 class EmailMessageIn(BaseModel):
     message_id: str
     sender: str
-    trip_id: int
+    trip_id: int | None = Field(default=None, gt=0, description="Omitir para asociar automáticamente por fechas a un único viaje activo propio.")
     kind: ReservationKind
     provider: str
     confirmation_code: str | None = None
@@ -192,6 +192,33 @@ def owned_reservation(conn, reservation_id: int, owner: str):
     if not row:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     return row
+
+def resolve_trip_id(conn, trip_id: int | None, owner: str, start_at: str | None, end_at: str | None) -> int:
+    """Asocia por fechas solo si existe un único viaje activo del propietario.
+
+    Las asignaciones explícitas se conservan. No inventa destinos, itinerarios ni viajes.
+    """
+    if trip_id is not None:
+        owned_trip(conn, trip_id, owner)
+        return trip_id
+    if start_at is None:
+        raise HTTPException(422, "Para asociar automáticamente se requiere start_at o un trip_id")
+    start_day = reservation_datetime(start_at).date().isoformat()
+    end_day = reservation_datetime(end_at or start_at).date().isoformat()
+    matches = conn.execute(
+        """SELECT id FROM trips
+           WHERE owner=? AND status='active'
+             AND start_date IS NOT NULL AND end_date IS NOT NULL
+             AND start_date<=? AND end_date>=?
+           ORDER BY id""",
+        (owner, start_day, end_day),
+    ).fetchall()
+    if not matches:
+        raise HTTPException(422, "No hay un viaje activo propio que contenga el período; indicá trip_id")
+    if len(matches) > 1:
+        raise HTTPException(409, "Hay varios viajes compatibles; indicá trip_id para evitar una asociación incorrecta")
+    return matches[0]["id"]
+
 
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -501,13 +528,14 @@ def delete_trip(trip_id: int, owner: str = Depends(current_user)):
     response_model=ReservationOut,
     tags=["Reservas"],
     summary="Agregar una reserva",
-    description="Crea una reserva manual dentro de uno de tus viajes.",
+    description="Crea una reserva manual dentro de un viaje propio; si se omite trip_id, asocia por fechas solo cuando hay un único viaje activo compatible.",
 )
 def create_reservation(payload: ReservationIn, owner: str = Depends(current_user)):
     validate_period(payload.start_at, payload.end_at, reservation_datetime)
     with connect() as c:
-        owned_trip(c, payload.trip_id, owner)
+        trip_id = resolve_trip_id(c, payload.trip_id, owner, payload.start_at, payload.end_at)
         data = enrich_reservation(payload.model_dump())
+        data["trip_id"] = trip_id
         cur = c.execute("""INSERT INTO reservations(trip_id,owner,kind,provider,confirmation_code,start_at,end_at,destination,status,source)
             VALUES(?,?,?,?,?,?,?,?,?,'manual')""",
             (data["trip_id"], owner, data["kind"], data["provider"], data["confirmation_code"],
@@ -611,7 +639,7 @@ def delete_whitelist(entry_id: int, owner: str = Depends(current_user)):
     response_model=EmailImported | EmailNotImported,
     tags=["Correo"],
     summary="Simular importación de un correo",
-    description="Simula el procesamiento de un mensaje ya detectado por un conector externo. Rechaza remitentes no permitidos y evita duplicados por message_id.",
+    description="Simula la ingesta de un mensaje. Rechaza remitentes no permitidos, evita duplicados de importación y admite asociación automática por fechas cuando se omite trip_id.",
 )
 def ingest_email(payload: EmailMessageIn, owner: str = Depends(current_user)):
     sender = payload.sender.strip().lower()
@@ -622,9 +650,10 @@ def ingest_email(payload: EmailMessageIn, owner: str = Depends(current_user)):
         if not c.execute("SELECT 1 FROM whitelist WHERE owner=? AND sender=?", (owner, sender)).fetchone():
             # Un rechazo no consume el ID: puede reintentarse al autorizar al remitente.
             return {"result": "rejected_sender", "created": False}
-        owned_trip(c, payload.trip_id, owner)
         validate_period(payload.start_at, payload.end_at, reservation_datetime)
+        trip_id = resolve_trip_id(c, payload.trip_id, owner, payload.start_at, payload.end_at)
         data = enrich_reservation(payload.model_dump())
+        data["trip_id"] = trip_id
         cur = c.execute("""INSERT INTO reservations(trip_id,owner,kind,provider,confirmation_code,start_at,end_at,destination,status,source)
             VALUES(?,?,?,?,?,?,?,?,?,'email')""",
             (data["trip_id"], owner, data["kind"], data["provider"], data["confirmation_code"],

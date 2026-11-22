@@ -66,7 +66,7 @@ Dejá abierta la terminal mientras usás el prototipo. Al iniciar, la aplicació
 
 1. Abrí la interfaz. El campo **Token** viene con el de Alice, `demo-alice-token`. Para usar a Bob, cambialo por `demo-bob-token`. Hacé clic en **Cargar viajes** para ver los datos del usuario elegido.
 2. En **Crear viaje**, escribí un nombre y hacé clic en **Crear viaje**. El ID se copia al formulario de reservas.
-3. Elegí un tipo y un proveedor y hacé clic en **Agregar reserva**. Anotá el número que aparece como **Reserva #…** en la tarjeta del viaje.
+3. Elegí un tipo y un proveedor y hacé clic en **Agregar reserva**. Anotá el número que aparece como **Reserva #…** en la tarjeta del viaje. La interfaz mantiene la selección explícita por ID; en Swagger también podés omitir `trip_id` y proporcionar `start_at` para asociar la reserva automáticamente a un único viaje activo propio cuyas fechas contengan la reserva.
 4. En **Soporte**, escribí «¿Cuál es el estado de mi reserva?», ingresá ese ID y hacé clic en **Consultar asistente**.
 5. Enviá «Necesito un reembolso urgente» o «Quiero reprogramar mi vuelo» para ver la derivación simulada a la agencia indicada en el formulario. La demo no modifica la reserva al solicitar una reprogramación.
 
@@ -93,6 +93,7 @@ Podés cerrar la pestaña del navegador cuando termines. El servidor se detiene 
 
 - La demo funciona en local. No requiere servicios externos ni infraestructura en la nube.
 - Las integraciones con correo, proveedores y agencias son simuladas. Los tokens fijos son exclusivos de la demo. Un correo rechazado por remitente no permitido puede reintentarse con el mismo `message_id` una vez autorizado; las importaciones realizadas se deduplican.
+- La agrupación automática por fechas solo funciona si existe un único viaje activo propio compatible; si no hay coincidencias o son ambiguas, debe indicarse `trip_id`. No se crean viajes automáticamente.
 - El archivado de viajes vencidos ocurre al cargar el listado activo. La API permite incluir los archivados con `GET /trips?include_archived=true`.
 - La analítica separa almacenamiento y consultas. El indicador `cancellations` cuenta nuevas transiciones a cancelada tanto manuales como del proveedor simulado; no representa reservas únicas canceladas ni recupera eventos históricos. Si falla el registro de un evento, la operación principal puede completarse y el evento puede perderse. El rendimiento, la disponibilidad y la escala de producción quedan fuera de la verificación.
 
