@@ -11,9 +11,20 @@ Trotamundos es un prototipo académico del TPE de Diseño de Sistemas de Softwar
 
 ## 3. Obtener el proyecto
 
-Usá la **carpeta entregada**. Si la recibiste como ZIP, descomprimilo primero. Abrí una terminal en la carpeta que contiene `README.md`, `requirements.txt` y `app/`.
+El proyecto ya está disponible en [GitHub](https://github.com/nrosani009/IngenieriadeSoftware-Rosani-Saide). Para descargarlo sin instalar Git:
 
-El prototipo se entrega como carpeta local. La descarga de un ZIP desde GitHub y la clonación con Git quedan pendientes de una publicación. Para esta entrega no hace falta instalar Git.
+1. Abrí el repositorio y seleccioná **Code → Download ZIP**.
+2. Descomprimí el archivo descargado.
+3. Abrí una terminal en la carpeta extraída que contiene `README.md`, `requirements.txt` y `app/`.
+
+También podés usar una carpeta del proyecto entregada por separado. Si ya tenés Git instalado, opcionalmente podés clonarlo:
+
+```bash
+git clone https://github.com/nrosani009/IngenieriadeSoftware-Rosani-Saide.git
+cd IngenieriadeSoftware-Rosani-Saide
+```
+
+**No es necesario instalar Git** si utilizás la descarga ZIP.
 
 ## 4. Instalar las dependencias
 
@@ -43,7 +54,7 @@ Desde la misma terminal y en la carpeta del proyecto:
 python -m uvicorn app.main:app --reload
 ```
 
-Dejá abierta la terminal mientras usás el prototipo. Para detenerlo, presioná **Ctrl+C**. Al iniciar, la aplicación crea las bases SQLite si faltan. Opcionalmente, podés cambiar sus rutas con `TROTAMUNDOS_DB` y `TROTAMUNDOS_ANALYTICS_DB`.
+Dejá abierta la terminal mientras usás el prototipo. Al iniciar, la aplicación crea las bases SQLite si faltan. Opcionalmente, podés cambiar sus rutas con `TROTAMUNDOS_DB` y `TROTAMUNDOS_ANALYTICS_DB`.
 
 ## 6. Acceder desde el navegador
 
@@ -71,7 +82,14 @@ python -m pytest -q
 
 En la última verificación, pytest informó 15 pruebas aprobadas.
 
-## 9. Limitaciones
+## 9. Finalizar la revisión
+
+1. Volvé a la terminal donde está corriendo Uvicorn y presioná **Ctrl+C**. Esperá a que vuelva el prompt. Esto detiene el servidor y el recargador de `--reload`.
+2. Si activaste el entorno virtual, ejecutá `deactivate` en esa terminal. Luego podés cerrarla.
+
+Podés cerrar la pestaña del navegador cuando termines. El servidor se detiene desde la terminal.
+
+## 10. Limitaciones
 
 - La demo funciona en local. No requiere servicios externos ni infraestructura en la nube.
 - Las integraciones con correo, proveedores y agencias son simuladas. Los tokens fijos son exclusivos de la demo.
