@@ -1,0 +1,16 @@
+# Entorno virtual y cachés de Python
+/.venv/
+__pycache__/
+*.pyc
+/.pytest_cache/
+
+# Configuración local
+/.env
+/.env.*
+!/.env.example
+
+# Bases SQLite generadas por el prototipo
+/trotamundos.db
+/trotamundos.db-*
+/analytics.db
+/analytics.db-*
