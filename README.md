@@ -94,7 +94,8 @@ Podés cerrar la pestaña del navegador cuando termines. El servidor se detiene 
 - La demo funciona en local. No requiere servicios externos ni infraestructura en la nube.
 - Las integraciones con correo, proveedores y agencias son simuladas. Los tokens fijos son exclusivos de la demo. Un correo rechazado por remitente no permitido puede reintentarse con el mismo `message_id` una vez autorizado; las importaciones realizadas se deduplican.
 - La agrupación automática por fechas solo funciona si existe un único viaje activo propio compatible; si no hay coincidencias o son ambiguas, debe indicarse `trip_id`. No se crean viajes automáticamente.
-- El archivado de viajes vencidos ocurre al cargar el listado activo. La API permite incluir los archivados con `GET /trips?include_archived=true`.
+- El archivado de viajes vencidos ocurre **bajo demanda** al consultar el listado activo (`GET /trips`) o al ejecutar `POST /trips/archive-finished`. `GET /trips?include_archived=true` solo muestra todos los viajes y no dispara el archivado; no se ejecuta ninguna tarea periódica.
+- El listado de viajes recupera las reservas en una consulta conjunta (sin una consulta por cada viaje). Esto reduce el número de consultas SQLite, pero no constituye una medición de rendimiento bajo carga.
 - La analítica separa almacenamiento y consultas. El indicador `cancellations` cuenta nuevas transiciones a cancelada tanto manuales como del proveedor simulado; no representa reservas únicas canceladas ni recupera eventos históricos. Si falla el registro de un evento, la operación principal puede completarse y el evento puede perderse. El rendimiento, la disponibilidad y la escala de producción quedan fuera de la verificación.
 
 Para consultar decisiones y evidencias, ver [Análisis y trazabilidad](docs/adr/ANALISIS_Y_TRAZABILIDAD.md).

@@ -23,5 +23,11 @@ Usar Python 3.11, FastAPI y SQLite como base del prototipo. FastAPI genera la do
 
 Se conserva la asignación manual mediante `trip_id`. Como demostración acotada de UC-03, al omitir dicho identificador en la API de reservas o en la ingesta de correo, se busca un único viaje activo del usuario cuyas fechas incluyan el período de la reserva. Si falta la fecha inicial, no hay coincidencias o existen varias, se pide especificar el viaje; no se crea uno automáticamente ni se infieren destinos.
 
+## Archivado y consultas de viajes
+
+El archivado de viajes finalizados se aplica **bajo demanda** al consultar el listado activo (`GET /trips`) o al invocar `POST /trips/archive-finished`; consultar `include_archived=true` no modifica estados. Esta decisión evita un servicio de tareas periódicas para el alcance académico, pero no equivale a archivado independiente del acceso del usuario.
+
+Para evitar consultas N+1, el listado obtiene los viajes del usuario en una consulta y carga conjuntamente sus reservas en una segunda consulta, manteniendo la agrupación y el aislamiento por propietario.
+
 ## Relación con el alcance
 Se prioriza la demostración de arquitectura y trazabilidad por sobre la simulación de infraestructura de producción.

@@ -467,7 +467,7 @@ def get_trip(trip_id: int, owner: str = Depends(current_user)):
     "/trips",
     tags=["Viajes"],
     summary="Listar mis viajes",
-    description="Devuelve tus viajes con sus reservas agrupadas. Al pedir el listado activo, archiva tus viajes vencidos.",
+    description="Devuelve tus viajes con sus reservas agrupadas. Solo el listado activo archiva a demanda los viajes vencidos del usuario; include_archived=true no ejecuta archivado.",
 )
 def list_trips(include_archived: bool = False, owner: str = Depends(current_user)):
     if not include_archived:
@@ -479,10 +479,21 @@ def list_trips(include_archived: bool = False, owner: str = Depends(current_user
             query += " AND status='active'"
         query += " ORDER BY start_date, id"
         trips = [rowdict(r) for r in c.execute(query, args).fetchall()]
+        # Dos consultas como máximo: una para viajes y otra para todas sus reservas.
+        # Se mantiene el orden de reservas dentro de cada viaje y el aislamiento por usuario.
+        if not trips:
+            return trips
+        trip_by_id = {trip["id"]: trip for trip in trips}
         for trip in trips:
-            trip["reservations"] = [rowdict(r) for r in c.execute(
-                "SELECT * FROM reservations WHERE trip_id=? AND owner=? ORDER BY start_at,id",
-                (trip["id"], owner)).fetchall()]
+            trip["reservations"] = []
+        placeholders = ",".join("?" for _ in trip_by_id)
+        reservations = c.execute(
+            f"SELECT * FROM reservations WHERE owner=? AND trip_id IN ({placeholders}) "
+            "ORDER BY start_at, id",
+            (owner, *trip_by_id),
+        ).fetchall()
+        for reservation in reservations:
+            trip_by_id[reservation["trip_id"]]["reservations"].append(rowdict(reservation))
         return trips
 
 @app.patch(
@@ -690,7 +701,7 @@ def provider_update(reservation_id: int, payload: ProviderUpdateIn, owner: str =
     "/trips/archive-finished",
     tags=["Viajes"],
     summary="Archivar viajes finalizados",
-    description="Archiva tus viajes activos con fecha de fin anterior a hoy. También se ejecuta al consultar el listado activo.",
+    description="Archiva a demanda tus viajes activos con fecha de fin anterior a hoy. También se ejecuta al consultar GET /trips sin include_archived=true. No existe una tarea programada.",
 )
 def archive_finished(owner: str = Depends(current_user)):
     count = archive_finished_trips(owner, date.today().isoformat())

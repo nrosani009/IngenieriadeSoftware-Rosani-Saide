@@ -229,6 +229,49 @@ def test_active_listing_archives_overdue_trips_on_demand():
     assert next(row for row in all_trips if row["id"] == trip["id"])["status"] == "archived"
 
 
+
+def test_archiving_is_on_demand_and_archived_listing_does_not_trigger_it():
+    past = (date.today() - timedelta(days=2)).isoformat()
+    trip = client.post("/trips", headers=BOB, json={
+        "name": "Pendiente de archivar", "end_date": past,
+    }).json()
+    # El listado completo no modifica el estado; no hay una tarea periódica.
+    before = client.get("/trips?include_archived=true", headers=BOB)
+    assert before.status_code == 200
+    assert next(t for t in before.json() if t["id"] == trip["id"])["status"] == "active"
+    # El listado activo dispara el archivado solo para el usuario autenticado.
+    active = client.get("/trips", headers=BOB)
+    assert active.status_code == 200
+    assert trip["id"] not in [t["id"] for t in active.json()]
+    after = client.get("/trips?include_archived=true", headers=BOB)
+    assert next(t for t in after.json() if t["id"] == trip["id"])["status"] == "archived"
+
+
+def test_trip_listing_batches_reservations_and_preserves_isolation():
+    # Tres viajes con distinta cantidad de reservas, incluidos uno vacío.
+    trips = [client.post("/trips", headers=ALICE, json={"name": f"Lote {i}"}).json()
+             for i in range(3)]
+    expected = {}
+    for i, trip in enumerate(trips):
+        expected[trip["id"]] = []
+        for j in range(i):
+            reservation = client.post("/reservations", headers=ALICE, json={
+                "trip_id": trip["id"], "kind": "hotel",
+                "provider": f"DemoStay-{i}-{j}",
+            }).json()
+            expected[trip["id"]].append(reservation["id"])
+    foreign = client.post("/trips", headers=BOB, json={"name": "Viaje privado Bob"}).json()
+    client.post("/reservations", headers=BOB, json={
+        "trip_id": foreign["id"], "kind": "bus", "provider": "Privado",
+    })
+    result = client.get("/trips?include_archived=true", headers=ALICE)
+    assert result.status_code == 200
+    returned = {t["id"]: t for t in result.json()}
+    assert foreign["id"] not in returned
+    for trip_id, reservation_ids in expected.items():
+        assert [r["id"] for r in returned[trip_id]["reservations"]] == reservation_ids
+
+
 def test_reservation_ingestion_and_analytics_contracts():
     trip = client.post("/trips", headers=ALICE, json={"name": "Contratos"}).json()
     reservation_response = client.post("/reservations", headers=ALICE, json={
