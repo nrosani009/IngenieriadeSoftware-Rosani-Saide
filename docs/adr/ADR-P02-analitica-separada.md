@@ -1,4 +1,4 @@
-# ADR-002: Separación entre operación y analítica
+# ADR-P02: Separación entre operación y analítica
 
 - Estado: Aceptado
 - Fecha: 2026-10-28

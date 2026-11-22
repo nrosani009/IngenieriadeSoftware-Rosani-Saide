@@ -1,4 +1,4 @@
-# ADR-003: Adaptadores simulados para proveedores y correo
+# ADR-P03: Adaptadores simulados para proveedores y correo
 
 - Estado: Aceptado
 - Fecha: 2026-10-28

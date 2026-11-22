@@ -1,4 +1,4 @@
-# ADR-001: Elección de FastAPI + SQLite para el prototipo
+# ADR-P01: Elección de FastAPI + SQLite para el prototipo
 
 - Estado: Aceptado
 - Fecha: 2026-10-28

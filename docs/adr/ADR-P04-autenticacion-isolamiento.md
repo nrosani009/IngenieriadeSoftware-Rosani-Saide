@@ -1,4 +1,4 @@
-# ADR-004: Autenticación mínima y aislamiento por usuario
+# ADR-P04: Autenticación mínima y aislamiento por usuario
 
 - Estado: Aceptado
 - Fecha: 2026-10-28
