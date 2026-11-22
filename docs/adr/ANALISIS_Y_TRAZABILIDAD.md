@@ -38,7 +38,7 @@ Los identificadores ADR-P01 a ADR-P04 corresponden a decisiones de implementaci�
 - **Iteración 4:** se proponen Mobile BFF, CDN, GLB y despliegue multirregión (ADR-007/008). La interfaz del prototipo es web adaptable; no es una aplicación móvil desplegada ni valida estas tácticas de infraestructura.
 - **Iteración 5:** el diseño incorpora la opción B, asistente virtual determinista y derivación a agencia, reutilizando conceptualmente la integración B2B (ADR-005/006). El ADR-009 es una propuesta aún no registrada. El prototipo consulta estados de reservas propias por ID y registra derivaciones simuladas (ADR-P03/P04); no resuelve reprogramaciones reales.
 
-**Nota sobre UC-03:** la introducción y la Iteración 1 usan UC-03 para agrupación y archivado, mientras que la Iteración 4 lo emplea para visualización móvil. La matriz conserva la primera acepción, señala la ambigüedad documental y no la resuelve unilateralmente; corresponde a INC-03.
+**Convención de UC-03:** UC-03 identifica únicamente la agrupación y el ciclo de vida de viajes, según la introducción y la Iteración 1. La visualización móvil de la Iteración 4 es un refinamiento de la consulta y gestión del itinerario (UC-02/UC-03), no un caso de uso adicional ni una redefinición de UC-03.
 
 **Evidencia:** las pruebas indicadas son funciones presentes en `tests/test_prototype.py`. Su existencia no constituye una medición de latencia, escalabilidad, disponibilidad ni una verificación independiente de ejecución.
 
