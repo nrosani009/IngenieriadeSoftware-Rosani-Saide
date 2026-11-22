@@ -1,7 +1,8 @@
 # ADR-008: Optimización del rendimiento móvil mediante Backend for Frontend (BFF)
 
 **Estado:** Aceptada  
-**Fecha:** Pendiente de registrar  
+**Fecha:** Pendiente de registrar
+**Última actualización:** 2026-11-22  
 **Iteración ADD:** 4 — Optimización del rendimiento móvil y distribución global.
 
 ## Contexto y problema
@@ -19,7 +20,7 @@ Se necesita definir una estrategia que permita adaptar las respuestas del backen
 - **UC-03:** Visualización del panel de viajes desde la aplicación móvil.
 - **QA-02:** Tiempo de respuesta web inferior a 800 ms.
 - **QA-03:** FCP móvil inferior a 1,4 segundos.
-- **QA-08:** Operación internacional y distribución multirregión.
+- **QA-10:** Distribución global y reducción de latencia geográfica mediante infraestructura multirregión.
 - **CON-01:** Despliegue sobre infraestructura de nube bajo un modelo SaaS.
 
 ## Alternativas consideradas
