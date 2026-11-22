@@ -63,12 +63,42 @@ def test_whitelist_ingestion_and_idempotency():
     message = {"message_id":"msg-001","sender":"travel@example.com","trip_id":trip["id"],"kind":"hotel","provider":"DemoStay","destination":"Córdoba"}
     rejected = client.post("/email/ingest", headers=ALICE, json=message)
     assert rejected.json()["result"] == "rejected_sender"
+    assert client.post("/email/ingest", headers=ALICE, json=message).json()["result"] == "rejected_sender"
     assert client.post("/whitelist", headers=ALICE, json={"sender":"travel@example.com"}).status_code == 201
-    message["message_id"] = "msg-002"
+    # El mismo message_id rechazado puede importarse cuando el remitente es autorizado.
     imported = client.post("/email/ingest", headers=ALICE, json=message)
     assert imported.json()["result"] == "imported"
     assert imported.json()["reservation"]["source"] == "email"
     assert client.post("/email/ingest", headers=ALICE, json=message).json()["result"] == "duplicate"
+
+
+def test_previously_recorded_rejected_message_can_be_imported():
+    from app.db import connect
+    trip = client.post("/trips", headers=BOB, json={"name": "Correo histórico"}).json()
+    message = {
+        "message_id": "legacy-rejected-001", "sender": "legacy@example.com",
+        "trip_id": trip["id"], "kind": "train", "provider": "DemoRail",
+    }
+    # Compatibilidad con rechazos persistidos por versiones anteriores.
+    with connect() as c:
+        c.execute(
+            "INSERT INTO processed_messages(owner,message_id,sender,result) VALUES(?,?,?,'rejected_sender')",
+            ("bob", message["message_id"], message["sender"]),
+        )
+    assert client.post("/email/ingest", headers=BOB, json=message).json()["result"] == "rejected_sender"
+    assert client.post("/whitelist", headers=BOB, json={"sender": message["sender"]}).status_code == 201
+    imported = client.post("/email/ingest", headers=BOB, json=message)
+    assert imported.status_code == 200
+    assert imported.json()["result"] == "imported"
+    assert client.post("/email/ingest", headers=BOB, json=message).json()["result"] == "duplicate"
+    with connect() as c:
+        row = c.execute(
+            "SELECT result, reservation_id FROM processed_messages WHERE owner=? AND message_id=?",
+            ("bob", message["message_id"]),
+        ).fetchone()
+        assert row["result"] == "imported"
+        assert row["reservation_id"] == imported.json()["reservation"]["id"]
+
 
 def test_provider_adapter_and_analytics():
     trip = client.post("/trips", headers=ALICE, json={"name":"Proveedor"}).json()

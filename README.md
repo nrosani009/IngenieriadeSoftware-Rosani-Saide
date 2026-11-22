@@ -92,7 +92,7 @@ Podés cerrar la pestaña del navegador cuando termines. El servidor se detiene 
 ## 10. Limitaciones
 
 - La demo funciona en local. No requiere servicios externos ni infraestructura en la nube.
-- Las integraciones con correo, proveedores y agencias son simuladas. Los tokens fijos son exclusivos de la demo.
+- Las integraciones con correo, proveedores y agencias son simuladas. Los tokens fijos son exclusivos de la demo. Un correo rechazado por remitente no permitido puede reintentarse con el mismo `message_id` una vez autorizado; las importaciones realizadas se deduplican.
 - El archivado de viajes vencidos ocurre al cargar el listado activo. La API permite incluir los archivados con `GET /trips?include_archived=true`.
 - La analítica separa almacenamiento y consultas. El indicador `cancellations` cuenta nuevas transiciones a cancelada tanto manuales como del proveedor simulado; no representa reservas únicas canceladas ni recupera eventos históricos. Si falla el registro de un evento, la operación principal puede completarse y el evento puede perderse. El rendimiento, la disponibilidad y la escala de producción quedan fuera de la verificación.
 

@@ -616,11 +616,11 @@ def delete_whitelist(entry_id: int, owner: str = Depends(current_user)):
 def ingest_email(payload: EmailMessageIn, owner: str = Depends(current_user)):
     sender = payload.sender.strip().lower()
     with connect() as c:
-        if c.execute("SELECT 1 FROM processed_messages WHERE owner=? AND message_id=?", (owner, payload.message_id)).fetchone():
+        if c.execute("SELECT 1 FROM processed_messages WHERE owner=? AND message_id=? AND result='imported'",
+                     (owner, payload.message_id)).fetchone():
             return {"result": "duplicate", "created": False}
         if not c.execute("SELECT 1 FROM whitelist WHERE owner=? AND sender=?", (owner, sender)).fetchone():
-            c.execute("INSERT INTO processed_messages(owner,message_id,sender,result) VALUES(?,?,?,'rejected_sender')",
-                      (owner, payload.message_id, sender))
+            # Un rechazo no consume el ID: puede reintentarse al autorizar al remitente.
             return {"result": "rejected_sender", "created": False}
         owned_trip(c, payload.trip_id, owner)
         validate_period(payload.start_at, payload.end_at, reservation_datetime)
@@ -630,7 +630,12 @@ def ingest_email(payload: EmailMessageIn, owner: str = Depends(current_user)):
             (data["trip_id"], owner, data["kind"], data["provider"], data["confirmation_code"],
              data["start_at"], data["end_at"], data["destination"], data.get("status", "confirmed")))
         rid = cur.lastrowid
-        c.execute("INSERT INTO processed_messages(owner,message_id,sender,result,reservation_id) VALUES(?,?,?,'imported',?)",
+        c.execute("""INSERT INTO processed_messages(owner,message_id,sender,result,reservation_id)
+                     VALUES(?,?,?,'imported',?)
+                     ON CONFLICT(owner,message_id) DO UPDATE SET
+                         sender=excluded.sender, result='imported',
+                         reservation_id=excluded.reservation_id
+                     WHERE processed_messages.result='rejected_sender'""",
                   (owner, payload.message_id, sender, rid))
         reservation = rowdict(c.execute("SELECT * FROM reservations WHERE id=?", (rid,)).fetchone())
     log_analytics(owner, rid, "imported_email", reservation["kind"], reservation["destination"])

@@ -9,6 +9,7 @@ La consigna contempla integraciones con correo, proveedores y agencias. El proto
 ## Decisión
 Implementar adaptadores simulados para:
 - ingestión de correos a través de `/email/ingest`
+- rechazo de remitentes no autorizados sin consumir su `message_id`; una vez autorizado el remitente, puede reintentarse el mismo mensaje. Las importaciones exitosas sí se deduplican de forma persistente
 - actualizaciones de reservas por proveedor mediante `/provider/reservations/{reservation_id}/update`
 - clasificación del soporte y derivación a agencia preferida
 
